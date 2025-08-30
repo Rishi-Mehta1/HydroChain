@@ -9,8 +9,11 @@ import {
   Plus,
   Upload,
   FileText,
-  Leaf
+  Leaf,
+  Factory,
+  Award
 } from 'lucide-react';
+import MagicBento from '../../components/ui/MagicBento';
 
 const ProducerDashboard = () => {
   const [activeTab, setActiveTab] = useState('production');
@@ -42,6 +45,58 @@ const ProducerDashboard = () => {
     }
   ];
 
+  // Magic Bento Cards Data
+  const statsCards = [
+    {
+      id: 'production',
+      title: 'Total Production',
+      description: 'Green hydrogen produced this month',
+      label: 'MWh',
+      value: productionStats.totalProduced,
+      icon: Zap,
+      gradient: 'linear-gradient(135deg, #10b981, #16a34a)',
+      progress: 75,
+      trend: 12.5,
+      onClick: () => setActiveTab('production')
+    },
+    {
+      id: 'credits',
+      title: 'Credits Issued',
+      description: 'Verified blockchain credits generated',
+      label: 'Credits',
+      value: productionStats.creditsIssued,
+      icon: Award,
+      gradient: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+      progress: 88,
+      trend: 8.3,
+      onClick: () => setActiveTab('credits')
+    },
+    {
+      id: 'verification',
+      title: 'Pending Verification',
+      description: 'Production awaiting third-party verification',
+      label: 'MWh',
+      value: productionStats.pendingVerification,
+      icon: Shield,
+      gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      progress: 30,
+      trend: -5.2,
+      onClick: () => setActiveTab('verification')
+    },
+    {
+      id: 'facilities',
+      title: 'Active Facilities',
+      description: 'Production facilities in operation',
+      label: 'Facilities',
+      value: 3,
+      icon: Factory,
+      gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+      progress: 100,
+      trend: 0,
+      onClick: () => setActiveTab('facilities')
+    }
+  ];
+
   const TabButton = ({ id, label, isActive, onClick }) => (
     <button
       onClick={() => onClick(id)}
@@ -59,27 +114,18 @@ const ProducerDashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Green Hydrogen Producer Dashboard</h1>
-            <p className="text-gray-600">Manage your production, issue credits, and track verification status</p>
-          </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{productionStats.totalProduced}</div>
-              <div className="text-sm text-gray-500">MWh Produced</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-emerald-600">{productionStats.creditsIssued}</div>
-              <div className="text-sm text-gray-500">Credits Issued</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{productionStats.pendingVerification}</div>
-              <div className="text-sm text-gray-500">Pending Verification</div>
-            </div>
-          </div>
+        <div className="text-center md:text-left">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Green Hydrogen Producer Dashboard</h1>
+          <p className="text-gray-600">Manage your production, issue credits, and track verification status</p>
         </div>
       </div>
+
+      {/* Interactive Stats Cards with Magic Bento Effects */}
+      <MagicBento 
+        cards={statsCards}
+        gridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        className=""
+      />
 
       {/* Production Growth */}
       <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
