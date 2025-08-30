@@ -96,7 +96,7 @@ const Navbar = ({ user }) => {
                         <div
                           key={notification.id}
                           className={`p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                            notification.unread ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                            notification.unread ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
                           }`}
                         >
                           <div className="flex items-start">
@@ -112,7 +112,7 @@ const Navbar = ({ user }) => {
                               </p>
                             </div>
                             {notification.unread && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                              <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
                             )}
                           </div>
                         </div>
@@ -137,7 +137,7 @@ const Navbar = ({ user }) => {
                 className="flex items-center space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <img
-                  src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=0ea5e9&color=fff'}
+                  src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=10b981&color=fff'}
                   alt={user?.name || 'User'}
                   className="w-8 h-8 rounded-full"
                 />

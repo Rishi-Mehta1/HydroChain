@@ -31,7 +31,7 @@ const ProducerDashboard = () => {
       value: '7,300',
       change: '+5%',
       icon: Activity,
-      color: 'bg-blue-500',
+      color: 'bg-emerald-500',
       trend: 'up'
     },
     {

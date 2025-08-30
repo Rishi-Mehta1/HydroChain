@@ -42,12 +42,12 @@ export const getStatusColor = (status) => {
     active: 'text-green-600 bg-green-100',
     pending: 'text-yellow-600 bg-yellow-100',
     retired: 'text-gray-600 bg-gray-100',
-    completed: 'text-blue-600 bg-blue-100',
+    completed: 'text-emerald-600 bg-emerald-100',
     failed: 'text-red-600 bg-red-100',
     operational: 'text-green-600 bg-green-100',
     maintenance: 'text-orange-600 bg-orange-100',
     approved: 'text-green-600 bg-green-100',
-    reviewed: 'text-blue-600 bg-blue-100',
+    reviewed: 'text-emerald-600 bg-emerald-100',
     resolved: 'text-purple-600 bg-purple-100',
   };
   return colors[status] || 'text-gray-600 bg-gray-100';
