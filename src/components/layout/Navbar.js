@@ -1,37 +1,147 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Sun, Moon, User, LogOut, ChevronDown, Search, Menu, X } from 'lucide-react';
+import { Bell, Sun, Moon, User, LogOut, ChevronDown, Search, Menu, X, Settings } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
+import simpleCreditsService from '../../services/simpleCreditsService';
+import realtimeService from '../../services/realtimeService';
 
-const Navbar = ({ user }) => {
+const Navbar = ({ user: propUser }) => {
+  const { user: authUser, signOut, role } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
+  
+  // Use auth user or prop user
+  const user = authUser || propUser;
 
-  const notifications = [
-    {
-      id: 1,
-      title: 'New Credit Issued',
-      message: '1000 credits have been successfully issued',
-      time: '5 min ago',
-      unread: true,
-    },
-    {
-      id: 2,
-      title: 'Verification Complete',
-      message: 'Your credits have been verified',
-      time: '1 hour ago',
-      unread: true,
-    },
-    {
-      id: 3,
-      title: 'Transfer Successful',
-      message: '500 credits transferred to EcoTransport Ltd',
-      time: '3 hours ago',
-      unread: false,
-    },
-  ];
+  useEffect(() => {
+    loadNotifications();
+    setupRealtimeNotifications();
+
+    return () => {
+      // Cleanup realtime subscriptions if needed
+    };
+  }, [user]);
+
+  const loadNotifications = async () => {
+    // Mock notifications for now - could be replaced with real API call
+    const mockNotifications = [
+      {
+        id: 1,
+        title: 'System Update',
+        message: 'Dashboard has been updated with new features',
+        time: new Date(Date.now() - 5 * 60 * 1000).toLocaleString(),
+        unread: true,
+        type: 'system'
+      },
+      {
+        id: 2,
+        title: 'Welcome to HydroChain',
+        message: 'Start by exploring the dashboard features',
+        time: new Date(Date.now() - 60 * 60 * 1000).toLocaleString(),
+        unread: true,
+        type: 'welcome'
+      }
+    ];
+    setNotifications(mockNotifications);
+  };
+
+  const setupRealtimeNotifications = async () => {
+    try {
+      await realtimeService.initialize();
+      // Subscribe to realtime updates for notifications
+      await realtimeService.subscribeToUserUpdates((update) => {
+        // Add new notification based on update
+        if (update.type === 'credits' && update.action === 'insert') {
+          addNotification({
+            title: 'New Credit Issued',
+            message: `Credit #${update.data.token_id || update.data.id} has been issued`,
+            type: 'credit_issued'
+          });
+        } else if (update.type === 'transactions') {
+          addNotification({
+            title: `Credit ${update.data.type}`,
+            message: `Transaction completed for ${update.data.volume} kg H₂`,
+            type: 'transaction'
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error setting up realtime notifications:', error);
+    }
+  };
+
+  const addNotification = (notification) => {
+    const newNotification = {
+      id: Date.now(),
+      ...notification,
+      time: new Date().toLocaleString(),
+      unread: true
+    };
+    setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep only 10 notifications
+  };
+
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearch(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Search credits by token_id or description
+      const results = await simpleCreditsService.searchCredits({
+        status: ['issued', 'transferred', 'retired'],
+        // Add search functionality to service if not exists
+      });
+      
+      // Filter results based on query
+      const filteredResults = results.filter(credit => 
+        credit.token_id?.toLowerCase().includes(query.toLowerCase()) ||
+        credit.metadata?.description?.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      setSearchResults(filteredResults.slice(0, 5)); // Show top 5 results
+      setShowSearch(true);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
+  const markNotificationAsRead = (notificationId) => {
+    setNotifications(prev => 
+      prev.map(notification => 
+        notification.id === notificationId 
+          ? { ...notification, unread: false }
+          : notification
+      )
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => 
+      prev.map(notification => ({ ...notification, unread: false }))
+    );
+  };
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
@@ -59,7 +169,12 @@ const Navbar = ({ user }) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors duration-200" size={18} />
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Search credits..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
                   className="w-full pl-9 pr-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 hover:shadow-sm"
                 />
               </motion.div>
@@ -197,7 +312,10 @@ const Navbar = ({ user }) => {
                         <User size={16} />
                         <span className="text-sm">Profile</span>
                       </button>
-                      <button className="w-full flex items-center space-x-3 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                      <button 
+                        onClick={handleSignOut}
+                        className="w-full flex items-center space-x-3 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                      >
                         <LogOut size={16} />
                         <span className="text-sm">Logout</span>
                       </button>
