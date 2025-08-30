@@ -14,6 +14,7 @@ import {
   Building,
   FileCheck
 } from 'lucide-react';
+import HydroChainLogo from '../components/layout/HydroChainLogo';
 
 const LandingPage = () => {
 
@@ -107,14 +108,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl shadow-md">
-                  <Leaf className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-                  HydroChain
-                </h1>
-              </div>
+              <HydroChainLogo size="small" />
             </div>
             
             <div className="flex items-center gap-4">
@@ -324,11 +318,8 @@ const LandingPage = () => {
       <footer className="bg-gray-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-2 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-2xl font-bold text-white">HydroChain</h3>
+            <div className="flex items-center justify-center mb-6">
+              <HydroChainLogo size="medium" className="text-white" />
             </div>
             
             <p className="text-gray-400 mb-8">

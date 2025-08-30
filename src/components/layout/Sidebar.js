@@ -15,6 +15,7 @@ import {
   Package,
   Activity
 } from 'lucide-react';
+import HydroChainLogo from './HydroChainLogo';
 
 const Sidebar = ({ userRole = 'producer' }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -108,21 +109,16 @@ const Sidebar = ({ userRole = 'producer' }) => {
           {/* Logo Section */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <motion.div
-                animate={{ opacity: isCollapsed ? 0 : 1 }}
-                transition={{ duration: 0.2 }}
-                className={`${isCollapsed ? 'hidden' : 'flex items-center space-x-2'}`}
-              >
-                <Leaf className="w-8 h-8 text-green-500" />
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                    H2 Credits
-                  </h2>
+              {isCollapsed ? (
+                <HydroChainLogo size="small" showText={false} variant="icon" />
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <HydroChainLogo size="small" showText={true} />
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Portal
                   </p>
                 </div>
-              </motion.div>
+              )}
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="hidden lg:block p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"

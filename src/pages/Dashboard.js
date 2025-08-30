@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import BuyerDashboard from './dashboard/BuyerDashboard';
 import ProducerDashboard from './dashboard/ProducerDashboard';
 import AuditorDashboard from './dashboard/AuditorDashboard';
+import HydroChainLogo from '../components/layout/HydroChainLogo';
 import { 
   LogOut, 
   User, 
@@ -288,13 +289,8 @@ const Dashboard = () => {
             {/* Left Section - Logo and Brand */}
             <div className="flex items-center">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl shadow-lg">
-                  <Leaf className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent">
-                    HydroChain
-                  </h1>
+                <HydroChainLogo size="small" />
+                <div className="hidden sm:block">
                   <p className="text-xs text-gray-500 font-medium">Green Hydrogen Credit System</p>
                 </div>
               </div>
@@ -444,10 +440,10 @@ const Dashboard = () => {
       <footer className="bg-white/60 backdrop-blur-sm border-t border-gray-100 mt-12">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <Leaf className="w-5 h-5 text-emerald-600" />
-              <span className="text-sm font-medium text-gray-700">HydroChain</span>
-            </div>
+          <div className="flex items-center">
+            <HydroChainLogo size="small" variant="icon" />
+            <span className="ml-2 text-sm font-medium text-gray-700">HydroChain</span>
+          </div>
             <p className="mt-2 md:mt-0 text-xs text-gray-500">
               &copy; {new Date().getFullYear()} HydroChain. All rights reserved.
             </p>

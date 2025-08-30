@@ -1,0 +1,81 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Emerald gradient -->
+    <linearGradient id="emeraldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#16A34A;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Green gradient for accents -->
+    <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22C55E;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#15803D;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Light emerald for highlights -->
+    <linearGradient id="lightGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6EE7B7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10B981;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="url(#emeraldGradient)" opacity="0.1"/>
+  
+  <!-- Blockchain links - vertical chain -->
+  <g transform="translate(160, 60)">
+    <!-- Link 1 -->
+    <rect x="-8" y="0" width="16" height="12" rx="3" fill="url(#emeraldGradient)" opacity="0.8"/>
+    <!-- Link 2 -->
+    <rect x="-8" y="15" width="16" height="12" rx="3" fill="url(#greenGradient)" opacity="0.8"/>
+    <!-- Link 3 -->
+    <rect x="-8" y="30" width="16" height="12" rx="3" fill="url(#emeraldGradient)" opacity="0.8"/>
+    <!-- Link 4 -->
+    <rect x="-8" y="45" width="16" height="12" rx="3" fill="url(#greenGradient)" opacity="0.8"/>
+    
+    <!-- Connecting elements -->
+    <line x1="0" y1="12" x2="0" y2="15" stroke="url(#emeraldGradient)" stroke-width="3" opacity="0.6"/>
+    <line x1="0" y1="27" x2="0" y2="30" stroke="url(#emeraldGradient)" stroke-width="3" opacity="0.6"/>
+    <line x1="0" y1="42" x2="0" y2="45" stroke="url(#emeraldGradient)" stroke-width="3" opacity="0.6"/>
+  </g>
+  
+  <!-- Central H2 molecule structure -->
+  <g transform="translate(100, 100)">
+    <!-- Hydrogen atoms -->
+    <circle cx="-20" cy="0" r="12" fill="url(#emeraldGradient)" stroke="#047857" stroke-width="2"/>
+    <circle cx="20" cy="0" r="12" fill="url(#emeraldGradient)" stroke="#047857" stroke-width="2"/>
+    
+    <!-- Bond line between H atoms -->
+    <line x1="-8" y1="0" x2="8" y2="0" stroke="#047857" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- H letters -->
+    <text x="-20" y="6" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">H</text>
+    <text x="20" y="6" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="white">H</text>
+    
+    <!-- Subscript 2 -->
+    <text x="32" y="8" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#047857">2</text>
+  </g>
+  
+  <!-- Leaf elements for sustainability -->
+  <g transform="translate(50, 70)">
+    <path d="M0,20 Q10,0 20,20 Q10,25 0,20" fill="url(#lightGradient)" opacity="0.9"/>
+    <line x1="10" y1="20" x2="10" y2="12" stroke="#047857" stroke-width="1.5"/>
+  </g>
+  
+  <g transform="translate(130, 130)">
+    <path d="M0,20 Q10,0 20,20 Q10,25 0,20" fill="url(#greenGradient)" opacity="0.9"/>
+    <line x1="10" y1="20" x2="10" y2="12" stroke="#047857" stroke-width="1.5"/>
+  </g>
+  
+  <!-- Digital/tech elements - connection lines -->
+  <g opacity="0.4">
+    <line x1="70" y1="80" x2="130" y2="120" stroke="url(#emeraldGradient)" stroke-width="2" stroke-dasharray="5,3"/>
+    <line x1="130" y1="80" x2="70" y2="120" stroke="url(#emeraldGradient)" stroke-width="2" stroke-dasharray="5,3"/>
+  </g>
+  
+  <!-- Energy waves -->
+  <g transform="translate(100, 160)" opacity="0.6">
+    <path d="M-30,0 Q-15,-8 0,0 Q15,-8 30,0" stroke="url(#lightGradient)" stroke-width="3" fill="none"/>
+    <path d="M-25,6 Q-12.5,-2 0,6 Q12.5,-2 25,6" stroke="url(#lightGradient)" stroke-width="2" fill="none"/>
+  </g>
+</svg>
