@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   Leaf, 
   Shield, 
@@ -15,9 +16,75 @@ import {
   FileCheck
 } from 'lucide-react';
 import HydroChainLogo from '../components/layout/HydroChainLogo';
+import MagicBento from '../components/ui/MagicBento';
 
 const LandingPage = () => {
 
+  // Transform features data for MagicBento
+  const featureCards = [
+    {
+      id: 'issue-credits',
+      title: 'Issue Green Credits',
+      description: 'Create and issue blockchain-verified green hydrogen credits with complete transparency',
+      label: 'Production',
+      icon: Leaf,
+      gradient: 'linear-gradient(135deg, #10b981, #16a34a)',
+      progress: 95,
+      trend: 15.2
+    },
+    {
+      id: 'verified-secure',
+      title: 'Verified & Secure',
+      description: 'All credits are cryptographically secured and verified by regulatory authorities',
+      label: 'Security',
+      icon: Shield,
+      gradient: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+      progress: 99,
+      trend: 8.7
+    },
+    {
+      id: 'track-performance',
+      title: 'Track Performance',
+      description: 'Monitor your credits, transactions, and compliance in real-time with advanced analytics',
+      label: 'Analytics',
+      icon: TrendingUp,
+      gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+      progress: 87,
+      trend: 12.3
+    },
+    {
+      id: 'connect-stakeholders',
+      title: 'Connect Stakeholders',
+      description: 'Seamlessly connect producers, buyers, and regulators in one unified platform',
+      label: 'Network',
+      icon: Users,
+      gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      progress: 78,
+      trend: 22.1
+    },
+    {
+      id: 'global-marketplace',
+      title: 'Global Marketplace',
+      description: 'Access a worldwide marketplace for green hydrogen credits with transparent pricing',
+      label: 'Trading',
+      icon: Globe,
+      gradient: 'linear-gradient(135deg, #14b8a6, #0f766e)',
+      progress: 82,
+      trend: 18.5
+    },
+    {
+      id: 'prevent-double-counting',
+      title: 'Prevent Double-Counting',
+      description: 'Blockchain technology ensures each credit is unique and prevents duplication',
+      label: 'Integrity',
+      icon: Lock,
+      gradient: 'linear-gradient(135deg, #ef4444, #dc2626)',
+      progress: 100,
+      trend: 0
+    }
+  ];
+
+  // Keep original features for potential fallback
   const features = [
     {
       icon: Leaf,
@@ -104,30 +171,63 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="bg-white/95 backdrop-blur-md shadow-sm border-b border-emerald-100 sticky top-0 z-50">
+      <motion.nav 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-white/95 backdrop-blur-md shadow-sm border-b border-emerald-100 sticky top-0 z-50"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <HydroChainLogo size="small" />
-            </div>
+          <div className="flex justify-between items-center h-16 gap-4 sm:gap-8">
+            {/* Logo */}
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="flex items-center flex-shrink-0"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <HydroChainLogo size="small" />
+              </motion.div>
+            </motion.div>
             
-            <div className="flex items-center gap-4">
-              <Link 
-                to="/login"
-                className="px-4 py-2 text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+            {/* Navigation Links */}
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="flex items-center gap-3 sm:gap-4 flex-shrink-0"
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Sign In
-              </Link>
-              <Link 
-                to="/signup"
-                className="px-6 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 font-medium transition-all duration-200 shadow-md"
+                <Link 
+                  to="/login"
+                  className="px-3 sm:px-4 py-2 text-emerald-600 hover:text-emerald-700 font-medium transition-all duration-200 text-sm sm:text-base rounded-lg hover:bg-emerald-50"
+                >
+                  Sign In
+                </Link>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Get Started
-              </Link>
-            </div>
+                <Link 
+                  to="/signup"
+                  className="px-4 sm:px-6 py-2 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 font-medium transition-all duration-200 shadow-md hover:shadow-lg text-sm sm:text-base whitespace-nowrap"
+                >
+                  <span className="hidden sm:inline">Get Started</span>
+                  <span className="sm:hidden">Start</span>
+                </Link>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-emerald-50 via-green-50 to-lime-50 py-20">
@@ -231,22 +331,12 @@ const LandingPage = () => {
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <div key={index} className="text-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow">
-                  <div className={`w-16 h-16 ${feature.bgColor} rounded-full flex items-center justify-center mx-auto mb-6`}>
-                    <Icon className={`w-8 h-8 ${feature.color}`} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 text-sm">
-                    {feature.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
+          {/* Interactive Feature Cards with Magic Bento Effects */}
+          <MagicBento 
+            cards={featureCards}
+            gridCols="grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+            className=""
+          />
         </div>
       </section>
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Sun, Moon, User, LogOut, ChevronDown, Search } from 'lucide-react';
+import { Bell, Sun, Moon, User, LogOut, ChevronDown, Search, Menu, X } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const Navbar = ({ user }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isDarkMode, toggleDarkMode } = useTheme();
 
   const notifications = [
@@ -35,31 +36,52 @@ const Navbar = ({ user }) => {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <nav className="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <motion.nav 
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="sticky top-0 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700"
+    >
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search credits, transactions..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
+        <div className="flex items-center justify-between h-16 gap-3 sm:gap-6">
+          {/* Search Bar - responsive width */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="flex-1 max-w-xs sm:max-w-md lg:max-w-lg xl:max-w-xl"
+          >
+            <div className="relative group">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                className="relative"
+              >
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-emerald-500 transition-colors duration-200" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 hover:shadow-sm"
+                />
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Right Section */}
-          <div className="flex items-center space-x-4">
+          {/* Right Section - better spacing and responsive */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 flex-shrink-0"
+          >
             {/* Dark Mode Toggle */}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleDarkMode}
               className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </motion.button>
 
             {/* Notifications */}
@@ -69,11 +91,12 @@ const Navbar = ({ user }) => {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="relative p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Notifications"
               >
-                <Bell size={20} />
+                <Bell size={18} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 transform translate-x-1 -translate-y-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadCount}
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </motion.button>
@@ -134,22 +157,23 @@ const Navbar = ({ user }) => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowProfile(!showProfile)}
-                className="flex items-center space-x-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center space-x-2 p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title={user?.name || 'User menu'}
               >
                 <img
                   src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=10b981&color=fff'}
                   alt={user?.name || 'User'}
-                  className="w-8 h-8 rounded-full"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-2 ring-emerald-100 dark:ring-emerald-800"
                 />
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="hidden lg:block text-left min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-24">
                     {user?.name || 'User Name'}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                     {user?.role || 'Role'}
                   </p>
                 </div>
-                <ChevronDown size={16} className="text-gray-500" />
+                <ChevronDown size={14} className="text-gray-500 hidden sm:block" />
               </motion.button>
 
               <AnimatePresence>

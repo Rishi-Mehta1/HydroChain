@@ -61,15 +61,15 @@ const HydroChainLogo = ({
 
   // Full logo with text
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center gap-2 sm:gap-3 ${className} flex-shrink-0`}>
       <img 
         src="/mainlogo.gif" 
         alt="HydroChain Logo" 
-        className={`${getSizeClasses()} object-contain`}
+        className={`${getSizeClasses()} object-contain flex-shrink-0`}
       />
       
       {showText && (
-        <h1 className={`${getTextSize()} font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent`}>
+        <h1 className={`${getTextSize()} font-bold bg-gradient-to-r from-emerald-600 to-green-700 bg-clip-text text-transparent whitespace-nowrap`}>
           HydroChain
         </h1>
       )}
