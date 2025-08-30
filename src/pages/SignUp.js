@@ -48,6 +48,23 @@ const SignUp = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 to-green-100 p-4">
       <div className="w-full max-w-md">
+        {/* Return to Home Button */}
+        <div className="mb-6">
+          <Link 
+            to="/" 
+            className="inline-flex items-center text-emerald-700 hover:text-emerald-800 transition-colors duration-200 group"
+          >
+            <svg 
+              className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:-translate-x-1" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="font-medium">Return to Home</span>
+          </Link>
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-emerald-800 mb-2">HydroChain</h1>
           <p className="text-emerald-700 font-medium">Blockchain-Based Green Hydrogen Credit System</p>
