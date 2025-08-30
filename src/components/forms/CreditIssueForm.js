@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle } from 'lucide-react';
+import { X, CheckCircle, Zap, ExternalLink, AlertCircle } from 'lucide-react';
 import { validateCreditForm, generateCreditId } from '../../utils/helpers';
+import freeBlockchainService from '../../services/freeBlockchainService';
+import NetworkSelector from '../NetworkSelector';
 
 const CreditIssueForm = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -10,11 +12,15 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
     certificationBody: '',
     expiryDate: '',
     facilityId: '',
-    co2Reduction: ''
+    co2Reduction: '',
+    description: ''
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transactionResult, setTransactionResult] = useState(null);
+  const [currentStep, setCurrentStep] = useState('form'); // form, blockchain, success
+  const [selectedNetwork, setSelectedNetwork] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,6 +37,10 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
     }
   };
 
+  const handleNetworkChange = (network) => {
+    setSelectedNetwork(network);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -41,13 +51,24 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
     }
 
     setIsSubmitting(true);
+    setCurrentStep('blockchain');
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setShowSuccess(true);
+    try {
+      console.log('🚀 Starting FREE blockchain transaction...');
       
-      // Reset form after 2 seconds
+      // Create description for blockchain transaction
+      const description = formData.description || `Green Hydrogen Credit: ${formData.amount} units via ${formData.productionMethod} from ${formData.facilityId}`;
+      
+      // Issue credits on FREE blockchain
+      const result = await freeBlockchainService.issueCredits(formData.amount, description);
+      
+      setTransactionResult(result);
+      setShowSuccess(true);
+      setCurrentStep('success');
+      
+      console.log('✅ FREE blockchain transaction successful!', result);
+      
+      // Reset form after 5 seconds to let user see the result
       setTimeout(() => {
         setFormData({
           amount: '',
@@ -55,12 +76,22 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
           certificationBody: '',
           expiryDate: '',
           facilityId: '',
-          co2Reduction: ''
+          co2Reduction: '',
+          description: ''
         });
         setShowSuccess(false);
+        setTransactionResult(null);
+        setCurrentStep('form');
         onClose();
-      }, 2000);
-    }, 1500);
+      }, 8000);
+      
+    } catch (error) {
+      console.error('❌ FREE blockchain transaction failed:', error);
+      setErrors({ blockchain: error.message });
+      setCurrentStep('form');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const modalVariants = {
@@ -118,20 +149,101 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
                 </button>
               </div>
 
-              {/* Success Message */}
+              {/* Step Indicator */}
+              {currentStep !== 'form' && (
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <Zap className="w-4 h-4 text-yellow-500" />
+                    <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                      {currentStep === 'blockchain' ? 'Creating FREE Blockchain Transaction...' : 'Transaction Complete!'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Blockchain Error */}
+              {errors.blockchain && (
+                <div className="m-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    <p className="text-red-800 dark:text-red-300">
+                      {errors.blockchain}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Success Message with Blockchain Details */}
               <AnimatePresence>
-                {showSuccess && (
+                {showSuccess && transactionResult && (
                   <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="m-6 p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg"
+                    className="m-6 space-y-4"
                   >
-                    <div className="flex items-center space-x-3">
-                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      <p className="text-green-800 dark:text-green-300">
-                        Credits issued successfully! Transaction ID: {generateCreditId()}
-                      </p>
+                    {/* Success Header */}
+                    <div className="p-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <div>
+                          <p className="text-green-800 dark:text-green-300 font-semibold">
+                            🎉 Credits issued successfully on FREE blockchain!
+                          </p>
+                          <p className="text-green-700 dark:text-green-400 text-sm">
+                            {transactionResult.message}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Blockchain Details */}
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <h4 className="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        Blockchain Transaction Details
+                      </h4>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Network:</span>
+                          <span className="font-medium text-gray-900 dark:text-white">
+                            {transactionResult.blockchain?.network} (FREE!)
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Token ID:</span>
+                          <span className="font-mono text-xs text-gray-900 dark:text-white">
+                            {transactionResult.token_id}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">TX Hash:</span>
+                          <span className="font-mono text-xs text-gray-900 dark:text-white">
+                            {transactionResult.tx_hash?.substring(0, 20)}...
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Cost:</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            FREE! (${transactionResult.isFree ? '0.00' : 'N/A'})
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* View on Explorer Button */}
+                      {transactionResult.explorerUrl && (
+                        <button
+                          onClick={() => window.open(transactionResult.explorerUrl, '_blank')}
+                          className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          View Transaction on Block Explorer
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -259,6 +371,21 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Add any additional details about this credit issuance..."
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+
                 {/* Buttons */}
                 <div className="flex space-x-3 pt-4">
                   <button
@@ -273,7 +400,10 @@ const CreditIssueForm = ({ isOpen, onClose }) => {
                         className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mx-auto"
                       />
                     ) : (
-                      'Issue Credits'
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        Issue Credits on FREE Blockchain
+                      </>
                     )}
                   </button>
                   <button
