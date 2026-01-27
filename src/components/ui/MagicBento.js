@@ -1,5 +1,4 @@
-import React, { useRef, useEffect } from 'react';
-import { gsap } from 'gsap';
+import React, { useRef } from 'react';
 import './MagicBento.css';
 
 const MagicBento = ({ 
@@ -10,20 +9,6 @@ const MagicBento = ({
 }) => {
   const gridRef = useRef(null);
 
-  useEffect(() => {
-    // Initialize GSAP animations for all cards
-    const cards = gridRef.current?.querySelectorAll('.magic-card');
-    
-    if (cards) {
-      gsap.set(cards, {
-        scale: 1,
-        rotationX: 0,
-        rotationY: 0,
-        transformPerspective: 1000,
-        transformOrigin: "center center"
-      });
-    }
-  }, []);
 
   const handleMouseMove = (e, cardElement) => {
     const rect = cardElement.getBoundingClientRect();
@@ -34,14 +19,9 @@ const MagicBento = ({
     const rotateX = (y - centerY) / centerY * -10;
     const rotateY = (x - centerX) / centerX * 10;
 
-    gsap.to(cardElement, {
-      duration: 0.3,
-      rotationX: rotateX,
-      rotationY: rotateY,
-      scale: 1.05,
-      ease: "power2.out",
-      transformOrigin: "center center"
-    });
+    // Use CSS transforms instead of GSAP
+    cardElement.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+    cardElement.style.transition = 'transform 0.3s ease-out';
 
     // Update CSS custom properties for gradient position
     cardElement.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
@@ -49,13 +29,9 @@ const MagicBento = ({
   };
 
   const handleMouseLeave = (cardElement) => {
-    gsap.to(cardElement, {
-      duration: 0.5,
-      rotationX: 0,
-      rotationY: 0,
-      scale: 1,
-      ease: "power2.out"
-    });
+    // Use CSS transforms instead of GSAP
+    cardElement.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+    cardElement.style.transition = 'transform 0.5s ease-out';
 
     // Reset gradient position
     cardElement.style.setProperty('--mouse-x', '50%');
@@ -67,27 +43,24 @@ const MagicBento = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Create ripple effect
+    // Create ripple effect with CSS animation
     const ripple = document.createElement('div');
     ripple.className = 'magic-ripple';
     ripple.style.left = `${x}px`;
     ripple.style.top = `${y}px`;
+    ripple.style.position = 'absolute';
+    ripple.style.width = '100px';
+    ripple.style.height = '100px';
+    ripple.style.borderRadius = '50%';
+    ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+    ripple.style.transform = 'scale(0)';
+    ripple.style.pointerEvents = 'none';
+    ripple.style.animation = 'ripple-effect 0.8s ease-out forwards';
+    
     cardElement.appendChild(ripple);
 
-    gsap.fromTo(
-      ripple,
-      {
-        scale: 0,
-        opacity: 1,
-      },
-      {
-        scale: 1,
-        opacity: 0,
-        duration: 0.8,
-        ease: "power2.out",
-        onComplete: () => ripple.remove(),
-      }
-    );
+    // Remove ripple after animation
+    setTimeout(() => ripple.remove(), 800);
   };
 
   return (

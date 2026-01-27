@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { X, ShoppingCart, ExternalLink, CheckCircle, AlertCircle, Loader, Zap, Info, DollarSign, TrendingUp, Clock, Shield } from 'lucide-react';
-import simpleCreditsService from '../../services/simpleCreditsService';
-import marketplaceService from '../../services/marketplaceService';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  ShoppingCart,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+  Zap,
+  Info,
+  DollarSign,
+  TrendingUp,
+  Clock,
+  Shield,
+  Download,
+} from "lucide-react";
+
+import marketplaceService from "../../services/marketplaceService";
 
 const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -23,25 +37,25 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
     setSuccess(null);
 
     try {
-      console.log('🛒 Starting real purchase process...');
-      
+      console.log("🛒 Starting real purchase process...");
+
       // Use the simple purchase method that works with RLS constraints
       const result = await marketplaceService.purchaseCreditSimple(credit.id);
-      
+
       setSuccess({
         message: result.message,
         transaction: result.transaction,
         blockchainDetails: result.blockchainDetails,
-        explorerUrl: result.blockchainDetails?.explorerUrl
+        explorerUrl: result.blockchainDetails?.explorerUrl,
+        certificateUrl: result.certificateUrl,
       });
 
       if (onSuccess) {
         onSuccess(result);
       }
-
     } catch (err) {
-      console.error('Error purchasing credit:', err);
-      setError(err.message || 'Failed to complete purchase. Please try again.');
+      console.error("Error purchasing credit:", err);
+      setError(err.message || "Failed to complete purchase. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,10 +73,10 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -78,7 +92,9 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Purchase Green Hydrogen Credit</h2>
+              <h2 className="text-xl font-bold text-gray-800">
+                Purchase Green Hydrogen Credit
+              </h2>
             </div>
             <button
               onClick={handleClose}
@@ -98,60 +114,87 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              
+
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">🎉 Purchase Successful!</h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  {success.message}
-                </p>
-                
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  🎉 Purchase Successful!
+                </h3>
+                <p className="text-gray-600 text-sm mb-4">{success.message}</p>
+
                 {/* Demo Environment Notice */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <div className="flex items-start gap-2">
                     <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm">
-                      <p className="font-medium text-blue-800 mb-1">Demo Environment</p>
+                      <p className="font-medium text-blue-800 mb-1">
+                        Demo Environment
+                      </p>
                       <p className="text-blue-700">
-                        Your purchase has been recorded successfully! In production, this would also transfer the credit ownership on-chain.
+                        Your purchase has been recorded successfully! In
+                        production, this would also transfer the credit
+                        ownership on-chain.
                       </p>
                     </div>
                   </div>
                 </div>
-                
+
                 {success.transaction && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                    <h4 className="font-medium text-green-800 mb-2">Transaction Details</h4>
+                    <h4 className="font-medium text-green-800 mb-2">
+                      Transaction Details
+                    </h4>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-green-700">Volume:</span>
-                        <span className="font-medium">{success.transaction.volume} kg H₂</span>
+                        <span className="font-medium">
+                          {success.transaction.volume} kg H₂
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-green-700">Total Paid:</span>
-                        <span className="font-semibold text-green-800">${success.transaction.price}</span>
+                        <span className="font-semibold text-green-800">
+                          ${success.transaction.price}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-green-700">Unit Price:</span>
-                        <span className="font-medium">${success.transaction.unitPrice}/kg</span>
+                        <span className="font-medium">
+                          ${success.transaction.unitPrice}/kg
+                        </span>
                       </div>
                       {success.transaction.blockchainTx && (
                         <div className="flex justify-between items-center">
                           <span className="text-green-700">Blockchain TX:</span>
-                          <span className="font-mono text-xs">{success.transaction.blockchainTx.substring(0, 8)}...</span>
+                          <span className="font-mono text-xs">
+                            {success.transaction.blockchainTx.substring(0, 8)}
+                            ...
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
-                
-                {success.explorerUrl && (
-                  <button
-                    onClick={() => window.open(success.explorerUrl, '_blank')}
-                    className="w-full mb-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+
+                {success.certificateUrl ? (
+                  <a
+                    href={success.certificateUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full mb-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                    View on Block Explorer
-                  </button>
+                    <FileText className="w-4 h-4" />
+                    Download Purchase Certificate
+                  </a>
+                ) : (
+                  success.explorerUrl && (
+                    <button
+                      onClick={() => window.open(success.explorerUrl, "_blank")}
+                      className="w-full mb-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      View Transaction Details
+                    </button>
+                  )
                 )}
               </div>
 
@@ -167,15 +210,21 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
             <div className="space-y-6">
               {/* Credit Details */}
               <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Credit Details</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Credit Details
+                </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Token ID:</span>
-                    <span className="font-mono text-gray-800">#{credit.token_id || 'Pending'}</span>
+                    <span className="font-mono text-gray-800">
+                      #{credit.token_id || "Pending"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Volume:</span>
-                    <span className="font-semibold text-gray-800">{credit.volume} kg H₂</span>
+                    <span className="font-semibold text-gray-800">
+                      {credit.volume} kg H₂
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
@@ -185,20 +234,17 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Created:</span>
-                    <span className="font-medium text-gray-800">{formatDate(credit.created_at)}</span>
+                    <span className="font-medium text-gray-800">
+                      {formatDate(credit.created_at)}
+                    </span>
                   </div>
                   {credit.blockchain_tx_hash && (
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Blockchain:</span>
-                      <a
-                        href={getEtherscanUrl(credit.blockchain_tx_hash)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-mono text-sm"
-                      >
-                        {credit.blockchain_tx_hash.slice(0, 6)}...{credit.blockchain_tx_hash.slice(-4)}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+                      <span className="flex items-center gap-1 text-blue-600 font-mono text-sm">
+                        <Shield className="w-3 h-3" />
+                        Verified
+                      </span>
                     </div>
                   )}
                 </div>
@@ -213,34 +259,47 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
                       Dynamic Pricing
                     </h3>
                     {pricing.factors.blockchainPremium && (
-                      <Shield className="w-4 h-4 text-blue-500" title="Blockchain Verified Premium" />
+                      <Shield
+                        className="w-4 h-4 text-blue-500"
+                        title="Blockchain Verified Premium"
+                      />
                     )}
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Base Price:</span>
-                      <span className="font-medium">${pricing.factors.basePrice}/kg H₂</span>
+                      <span className="font-medium">
+                        ${pricing.factors.basePrice}/kg H₂
+                      </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Unit Price:</span>
-                      <span className="font-semibold text-lg text-green-600">${pricing.unitPrice}/kg H₂</span>
+                      <span className="font-semibold text-lg text-green-600">
+                        ${pricing.unitPrice}/kg H₂
+                      </span>
                     </div>
-                    
+
                     <div className="bg-white rounded-lg p-3 border border-green-200">
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-700">Total Price:</span>
-                        <span className="text-2xl font-bold text-green-600">${pricing.totalPrice}</span>
+                        <span className="font-medium text-gray-700">
+                          Total Price:
+                        </span>
+                        <span className="text-2xl font-bold text-green-600">
+                          ${pricing.totalPrice}
+                        </span>
                       </div>
                       <div className="text-sm text-gray-500 mt-1">
                         {pricing.volume} kg H₂ × ${pricing.unitPrice}/kg
                       </div>
                     </div>
-                    
+
                     {/* Pricing Factors */}
                     <div className="mt-4 pt-3 border-t border-green-200">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Pricing Factors:</h4>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        Pricing Factors:
+                      </h4>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         {pricing.factors.volumeDiscount && (
                           <div className="flex items-center gap-1 text-green-700">
@@ -263,7 +322,9 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
                         {pricing.factors.productionMethod && (
                           <div className="flex items-center gap-1 text-orange-700">
                             <Zap className="w-3 h-3" />
-                            <span>{pricing.factors.productionMethod} Method</span>
+                            <span>
+                              {pricing.factors.productionMethod} Method
+                            </span>
                           </div>
                         )}
                       </div>
@@ -274,7 +335,7 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
                   </div>
                 </div>
               )}
-              
+
               {/* Real Purchase Info */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
@@ -282,11 +343,12 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
                   Real Blockchain Purchase
                 </h4>
                 <p className="text-sm text-blue-700 mb-2">
-                  This will perform a REAL purchase with actual blockchain transactions:
+                  This will perform a REAL purchase with PDF certificate
+                  generation:
                 </p>
                 <ul className="text-sm text-blue-700 space-y-1 ml-4">
                   <li>• Transfer credit ownership to your account</li>
-                  <li>• Create blockchain transaction record (FREE!)</li>
+                  <li>• Generate official PDF purchase certificate</li>
                   <li>• Remove credit from marketplace</li>
                   <li>• Add credit to your portfolio</li>
                 </ul>
@@ -316,12 +378,14 @@ const PurchaseCreditModal = ({ isOpen, onClose, credit, onSuccess }) => {
                   {loading ? (
                     <>
                       <Loader className="w-4 h-4 animate-spin" />
-                      Processing...
+                      Generating Certificate...
                     </>
                   ) : (
                     <>
                       <ShoppingCart className="w-4 h-4" />
-                      {pricing ? `Purchase for $${pricing.totalPrice}` : 'Purchase Credit'}
+                      {pricing
+                        ? `Purchase for $${pricing.totalPrice}`
+                        : "Purchase Credit"}
                     </>
                   )}
                 </button>

@@ -12,6 +12,7 @@ import LandingPage from './pages/LandingPage';
 // Import development utilities
 if (process.env.NODE_ENV === 'development') {
   import('./utils/createTestUser');
+  import('./utils/createTestUsers');
 }
 
 // Error Boundary Component

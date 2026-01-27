@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabaseClient';
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
@@ -18,23 +17,13 @@ const SignUp = () => {
     setError('');
 
     try {
-      // Store the selected role in temp table first
-      const { error: tempError } = await supabase
-        .from('temp_signup_data')
-        .insert([{ email, role }]);
-
-      if (tempError) throw tempError;
-
-      // Create user in Supabase Auth
+      // Create user in Supabase Auth with role
       const { error: signUpError } = await signUp({
         email,
         password,
-      });
+      }, role); // Pass the selected role as second parameter
 
       if (signUpError) throw signUpError;
-
-      // The user role will be automatically created by the database trigger
-      // using the role stored in temp_signup_data
 
       // Redirect to login after successful signup
       navigate('/login');

@@ -40,6 +40,37 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log('Fetching user role for:', userId);
+      
+      // Check if there's a pending role in localStorage first
+      const pendingRole = localStorage.getItem(`pending_role_${userId}`);
+      if (pendingRole) {
+        console.log('Found pending role in localStorage:', pendingRole);
+        
+        // Try to insert the pending role now that user is authenticated
+        try {
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert([
+              {
+                user_id: userId,
+                role: pendingRole
+              }
+            ]);
+          
+          if (insertError) {
+            console.warn('Failed to insert pending role:', insertError.message);
+          } else {
+            console.log('Successfully inserted pending role:', pendingRole);
+            localStorage.removeItem(`pending_role_${userId}`);
+            setRole(pendingRole);
+            return pendingRole;
+          }
+        } catch (pendingRoleError) {
+          console.warn('Error inserting pending role:', pendingRoleError.message);
+        }
+      }
+      
+      // Fetch existing role from database
       const { data, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -48,14 +79,44 @@ export const AuthProvider = ({ children }) => {
         
       if (roleError) {
         console.warn('Role fetch error (this is normal for new users):', roleError.message);
-        // Set default role for users without specific roles
-        const defaultRole = 'buyer'; // Default to industry buyer role
-        console.log('Setting default role:', defaultRole);
-        setRole(defaultRole);
-        return defaultRole;
+        
+        // Use pending role if available, otherwise default to buyer
+        const roleToUse = pendingRole || 'buyer';
+        console.log('Using role:', roleToUse);
+        
+        // Try to create the role for users without specific roles
+        try {
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert([
+              {
+                user_id: userId,
+                role: roleToUse
+              }
+            ]);
+          
+          if (insertError) {
+            console.warn('Failed to insert role:', insertError.message);
+          } else {
+            console.log('Role created successfully:', roleToUse);
+            if (pendingRole) {
+              localStorage.removeItem(`pending_role_${userId}`);
+            }
+          }
+        } catch (insertRoleError) {
+          console.warn('Insert role error:', insertRoleError.message);
+        }
+        
+        setRole(roleToUse);
+        return roleToUse;
       } else {
         console.log('User role found:', data?.role);
         const userRole = data?.role || 'buyer';
+        
+        // Clear pending role if we found an existing role
+        if (pendingRole) {
+          localStorage.removeItem(`pending_role_${userId}`);
+        }
         
         // Validate role against allowed roles
         const allowedRoles = ['buyer', 'producer', 'auditor', 'regulatory', 'verifier'];
@@ -66,9 +127,14 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching user role:', error);
-      const defaultRole = 'buyer';
-      setRole(defaultRole);
-      return defaultRole;
+      
+      // Check for pending role as fallback
+      const pendingRole = localStorage.getItem(`pending_role_${userId}`);
+      const fallbackRole = pendingRole || 'buyer';
+      
+      console.log('Using fallback role:', fallbackRole);
+      setRole(fallbackRole);
+      return fallbackRole;
     }
   }, []);
 
@@ -172,9 +238,52 @@ export const AuthProvider = ({ children }) => {
   }, [initialized, clearAuthState, fetchUserRole]);
 
   const value = {
-    signUp: async (data) => {
-      const { data: authData, error } = await supabase.auth.signUp(data);
-      return { user: authData.user, error };
+    signUp: async (data, userRole = 'buyer') => {
+      try {
+        // Create user in Supabase Auth
+        const { data: authData, error: signUpError } = await supabase.auth.signUp(data);
+        
+        if (signUpError) {
+          return { user: null, error: signUpError };
+        }
+        
+        // Store the role temporarily in localStorage for later insertion
+        // This handles cases where RLS policies prevent immediate role insertion
+        if (authData.user && authData.user.id) {
+          console.log('Storing user role for later insertion:', userRole, 'for user:', authData.user.id);
+          
+          // Store role temporarily
+          localStorage.setItem(`pending_role_${authData.user.id}`, userRole);
+          
+          // Attempt to insert the role immediately
+          try {
+            const { error: roleError } = await supabase
+              .from('user_roles')
+              .insert([
+                {
+                  user_id: authData.user.id,
+                  role: userRole
+                }
+              ]);
+            
+            if (roleError) {
+              console.warn('Failed to insert user role immediately (RLS policy or confirmation required):', roleError.message);
+              console.log('Role will be inserted when user signs in after email confirmation');
+            } else {
+              console.log('User role inserted successfully during signup');
+              // Remove from localStorage since it was successful
+              localStorage.removeItem(`pending_role_${authData.user.id}`);
+            }
+          } catch (insertError) {
+            console.warn('Role insertion failed, will retry on sign-in:', insertError.message);
+          }
+        }
+        
+        return { user: authData.user, error: null };
+      } catch (error) {
+        console.error('SignUp error:', error);
+        return { user: null, error };
+      }
     },
     signIn: async (data) => {
       const { data: authData, error } = await supabase.auth.signInWithPassword(data);

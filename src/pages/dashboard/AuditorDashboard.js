@@ -1,28 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Shield, 
-  FileCheck, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Shield,
+  FileCheck,
+  CheckCircle,
   TrendingUp,
   Eye,
   Search,
-  Filter,
   Download,
   RefreshCw,
-  Building,
-  Users,
   Activity,
   BarChart3,
   ExternalLink,
   Award,
-  Info
-} from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import simpleCreditsService from '../../services/simpleCreditsService';
-import realtimeService from '../../services/realtimeService';
+  Info,
+} from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
+import CreditService from "../../services/CreditService";
+import auditService from "../../services/auditService";
+import realtimeService from "../../services/realtimeService";
+import CreditAuditModal from "../../components/modals/CreditAuditModal";
+import CreditDetailsModal from "../../components/modals/CreditDetailsModal";
 
 const AuditorDashboard = () => {
   const { user } = useAuth();
@@ -30,10 +28,15 @@ const AuditorDashboard = () => {
   const [credits, setCredits] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [systemStats, setSystemStats] = useState(null);
-  const [selectedTab, setSelectedTab] = useState('overview');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedTab, setSelectedTab] = useState("overview");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+
+  // Modal states
+  const [showAuditModal, setShowAuditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedCreditId, setSelectedCreditId] = useState(null);
 
   useEffect(() => {
     loadAuditorData();
@@ -48,16 +51,23 @@ const AuditorDashboard = () => {
     try {
       setLoading(true);
       const [creditsData, transactionsData, statsData] = await Promise.all([
-        simpleCreditsService.getAvailableCredits(),
-        simpleCreditsService.getUserTransactions(),
-        simpleCreditsService.getSystemStats()
+        auditService.getCreditsForVerification(), // Use audit service to get only non-verified credits
+        CreditService.getUserTransactions(),
+        CreditService.getSystemStats(),
       ]);
-      
-      setCredits(creditsData);
+
+      // Filter out verified credits for the Credit Verification tab (check metadata)
+      const pendingCredits = creditsData.filter(
+        (credit) =>
+          !credit.metadata?.isVerified &&
+          credit.metadata?.verificationStatus !== "verified",
+      );
+
+      setCredits(pendingCredits);
       setTransactions(transactionsData);
       setSystemStats(statsData);
     } catch (error) {
-      console.error('Error loading auditor data:', error);
+      console.error("Error loading auditor data:", error);
     } finally {
       setLoading(false);
     }
@@ -67,18 +77,18 @@ const AuditorDashboard = () => {
     try {
       await realtimeService.initialize();
       await realtimeService.subscribeToUserUpdates((update) => {
-        console.log('Realtime update:', update);
+        console.log("Realtime update:", update);
         handleRealtimeUpdate(update);
       });
     } catch (error) {
-      console.error('Error setting up realtime subscriptions:', error);
+      console.error("Error setting up realtime subscriptions:", error);
     }
   };
 
   const handleRealtimeUpdate = (update) => {
-    if (update.type === 'credits') {
+    if (update.type === "credits") {
       loadAuditorData(); // Refresh data when credits are updated
-    } else if (update.type === 'transactions') {
+    } else if (update.type === "transactions") {
       loadAuditorData(); // Refresh data when transactions occur
     }
   };
@@ -92,14 +102,46 @@ const AuditorDashboard = () => {
   const handleViewOnBlockchain = (txHash) => {
     // Open Sepolia testnet explorer
     if (txHash) {
-      window.open(`https://sepolia.etherscan.io/tx/${txHash}`, '_blank');
+      window.open(`https://sepolia.etherscan.io/tx/${txHash}`, "_blank");
     }
   };
 
-  const filteredCredits = credits.filter(credit => {
-    const matchesSearch = credit.token_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         credit.metadata?.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || credit.status === statusFilter;
+  // Modal handlers
+  const handleAuditCredit = (creditId) => {
+    setSelectedCreditId(creditId);
+    setShowAuditModal(true);
+  };
+
+  const handleViewCreditDetails = (creditId) => {
+    setSelectedCreditId(creditId);
+    setShowDetailsModal(true);
+  };
+
+  const handleAuditComplete = (auditResult) => {
+    console.log("Audit completed:", auditResult);
+    // Refresh data after audit completion
+    loadAuditorData();
+    // You could also show a success toast here
+  };
+
+  const handleCloseAuditModal = () => {
+    setShowAuditModal(false);
+    setSelectedCreditId(null);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedCreditId(null);
+  };
+
+  const filteredCredits = credits.filter((credit) => {
+    const matchesSearch =
+      credit.token_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      credit.metadata?.description
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || credit.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -108,9 +150,9 @@ const AuditorDashboard = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -119,9 +161,9 @@ const AuditorDashboard = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5
-      }
-    }
+        duration: 0.5,
+      },
+    },
   };
 
   if (loading) {
@@ -143,33 +185,45 @@ const AuditorDashboard = () => {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.div variants={itemVariants} className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
               <Shield className="w-8 h-8 text-emerald-600" />
               Certification Body Dashboard
             </h1>
-            <p className="text-gray-600">Monitor system integrity, verify credits, and ensure compliance</p>
+            <p className="text-gray-600">
+              Monitor system integrity, verify credits, and ensure compliance
+            </p>
           </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+            />
             Refresh Data
           </button>
         </div>
       </motion.div>
 
       {/* System Stats */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 md:grid-cols-4 gap-6"
+      >
         <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Credits</p>
-              <p className="text-2xl font-bold text-gray-900">{systemStats?.totalCredits || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {systemStats?.totalCredits || 0}
+              </p>
               <p className="text-sm text-emerald-600 mt-1">System wide</p>
             </div>
             <div className="p-3 bg-emerald-100 rounded-lg">
@@ -182,7 +236,9 @@ const AuditorDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Volume</p>
-              <p className="text-2xl font-bold text-gray-900">{systemStats?.totalVolume || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {systemStats?.totalVolume || 0}
+              </p>
               <p className="text-sm text-blue-600 mt-1">kg H₂</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -195,7 +251,9 @@ const AuditorDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Active Credits</p>
-              <p className="text-2xl font-bold text-gray-900">{systemStats?.issuedVolume || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {systemStats?.issuedVolume || 0}
+              </p>
               <p className="text-sm text-green-600 mt-1">kg H₂</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
@@ -208,7 +266,9 @@ const AuditorDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Retired Credits</p>
-              <p className="text-2xl font-bold text-gray-900">{systemStats?.retiredVolume || 0}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {systemStats?.retiredVolume || 0}
+              </p>
               <p className="text-sm text-orange-600 mt-1">kg H₂</p>
             </div>
             <div className="p-3 bg-orange-100 rounded-lg">
@@ -219,13 +279,20 @@ const AuditorDashboard = () => {
       </motion.div>
 
       {/* Navigation Tabs */}
-      <motion.div variants={itemVariants} className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-white/70">
+      <motion.div
+        variants={itemVariants}
+        className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-white/70"
+      >
         <div className="flex flex-wrap gap-2">
           {[
-            { id: 'overview', label: 'System Overview', icon: BarChart3 },
-            { id: 'credits', label: 'Credit Verification', icon: Award },
-            { id: 'transactions', label: 'Transaction Monitor', icon: Activity },
-            { id: 'compliance', label: 'Compliance Reports', icon: FileCheck }
+            { id: "overview", label: "System Overview", icon: BarChart3 },
+            { id: "credits", label: "Credit Verification", icon: Award },
+            {
+              id: "transactions",
+              label: "Transaction Monitor",
+              icon: Activity,
+            },
+            { id: "compliance", label: "Compliance Reports", icon: FileCheck },
           ].map((tab) => {
             const Icon = tab.icon;
             return (
@@ -234,8 +301,8 @@ const AuditorDashboard = () => {
                 onClick={() => setSelectedTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   selectedTab === tab.id
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-white text-gray-600 hover:bg-emerald-50 hover:text-emerald-600'
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "bg-white text-gray-600 hover:bg-emerald-50 hover:text-emerald-600"
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -247,7 +314,7 @@ const AuditorDashboard = () => {
       </motion.div>
 
       {/* Tab Content */}
-      {selectedTab === 'overview' && (
+      {selectedTab === "overview" && (
         <motion.div variants={itemVariants} className="space-y-6">
           {/* Recent Activity */}
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
@@ -255,40 +322,61 @@ const AuditorDashboard = () => {
               <Activity className="w-5 h-5" />
               Recent System Activity
             </h2>
-            
+
             <div className="space-y-4">
-              {systemStats?.recentTransactions?.slice(0, 5).map((transaction, index) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${
-                      transaction.type === 'issue' ? 'bg-green-100' :
-                      transaction.type === 'transfer' ? 'bg-blue-100' : 'bg-orange-100'
-                    }`}>
-                      {transaction.type === 'issue' && <Award className="w-4 h-4 text-green-600" />}
-                      {transaction.type === 'transfer' && <Activity className="w-4 h-4 text-blue-600" />}
-                      {transaction.type === 'retire' && <CheckCircle className="w-4 h-4 text-orange-600" />}
+              {systemStats?.recentTransactions
+                ?.slice(0, 5)
+                .map((transaction, index) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          transaction.type === "issue"
+                            ? "bg-green-100"
+                            : transaction.type === "transfer"
+                            ? "bg-blue-100"
+                            : "bg-orange-100"
+                        }`}
+                      >
+                        {transaction.type === "issue" && (
+                          <Award className="w-4 h-4 text-green-600" />
+                        )}
+                        {transaction.type === "transfer" && (
+                          <Activity className="w-4 h-4 text-blue-600" />
+                        )}
+                        {transaction.type === "retire" && (
+                          <CheckCircle className="w-4 h-4 text-orange-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800 capitalize">
+                          {transaction.type} Transaction
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Credit: {transaction.credits?.token_id || "N/A"} •
+                          Volume: {transaction.volume} kg H₂
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-800 capitalize">{transaction.type} Transaction</p>
-                      <p className="text-sm text-gray-600">
-                        Credit: {transaction.credits?.token_id || 'N/A'} • Volume: {transaction.volume} kg H₂
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">
+                        {new Date(transaction.created_at).toLocaleDateString()}
                       </p>
+                      <button
+                        onClick={() =>
+                          handleViewOnBlockchain(transaction.tx_hash)
+                        }
+                        className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-1"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        View on Chain
+                      </button>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">
-                      {new Date(transaction.created_at).toLocaleDateString()}
-                    </p>
-                    <button 
-                      onClick={() => handleViewOnBlockchain(transaction.tx_hash)}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 mt-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      View on Chain
-                    </button>
-                  </div>
-                </div>
-              )) || (
+                )) || (
                 <div className="text-center py-8 text-gray-500">
                   <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No recent transactions</p>
@@ -299,7 +387,7 @@ const AuditorDashboard = () => {
         </motion.div>
       )}
 
-      {selectedTab === 'credits' && (
+      {selectedTab === "credits" && (
         <motion.div variants={itemVariants} className="space-y-6">
           {/* Search and Filter Bar */}
           <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-white/70">
@@ -337,30 +425,41 @@ const AuditorDashboard = () => {
               <Award className="w-5 h-5" />
               Credit Verification ({filteredCredits.length} credits)
             </h2>
-            
+
             <div className="space-y-4">
               {filteredCredits.map((credit) => (
-                <div key={credit.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div
+                  key={credit.id}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold text-gray-800">Credit #{credit.token_id || credit.id}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          credit.status === 'issued' ? 'bg-green-100 text-green-800' :
-                          credit.status === 'transferred' ? 'bg-blue-100 text-blue-800' :
-                          'bg-orange-100 text-orange-800'
-                        }`}>
+                        <h3 className="text-lg font-semibold text-gray-800">
+                          Credit #{credit.token_id || credit.id}
+                        </h3>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            credit.status === "issued"
+                              ? "bg-green-100 text-green-800"
+                              : credit.status === "transferred"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-orange-100 text-orange-800"
+                          }`}
+                        >
                           {credit.status.toUpperCase()}
                         </span>
                         <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-medium">
                           VERIFIED
                         </span>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <span className="text-gray-500">Volume:</span>
-                          <div className="font-medium text-gray-800">{credit.volume} kg H₂</div>
+                          <div className="font-medium text-gray-800">
+                            {credit.volume} kg H₂
+                          </div>
                         </div>
                         <div>
                           <span className="text-gray-500">Created:</span>
@@ -371,17 +470,22 @@ const AuditorDashboard = () => {
                         <div>
                           <span className="text-gray-500">Description:</span>
                           <div className="font-medium text-gray-800">
-                            {credit.metadata?.description || 'Green Hydrogen Credit'}
+                            {credit.metadata?.description ||
+                              "Green Hydrogen Credit"}
                           </div>
                         </div>
                       </div>
-                      
+
                       {credit.blockchain_tx_hash && (
                         <div className="mt-3 text-xs text-gray-500 flex items-center gap-2">
                           <Shield className="w-3 h-3" />
-                          <span>Blockchain Hash: {credit.blockchain_tx_hash}</span>
-                          <button 
-                            onClick={() => handleViewOnBlockchain(credit.blockchain_tx_hash)}
+                          <span>
+                            Blockchain Hash: {credit.blockchain_tx_hash}
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleViewOnBlockchain(credit.blockchain_tx_hash)
+                            }
                             className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
                           >
                             <ExternalLink className="w-3 h-3" />
@@ -390,13 +494,19 @@ const AuditorDashboard = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex flex-col gap-2">
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                      <button
+                        onClick={() => handleAuditCredit(credit.id)}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2"
+                      >
                         <Eye className="w-4 h-4" />
                         Audit
                       </button>
-                      <button className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                      <button
+                        onClick={() => handleViewCreditDetails(credit.id)}
+                        className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                      >
                         <Info className="w-4 h-4" />
                         Details
                       </button>
@@ -404,12 +514,14 @@ const AuditorDashboard = () => {
                   </div>
                 </div>
               ))}
-              
+
               {filteredCredits.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   <Award className="w-16 h-16 mx-auto mb-4 opacity-50" />
                   <p className="text-lg">No credits found</p>
-                  <p className="text-sm">Credits will appear here when they are issued by producers</p>
+                  <p className="text-sm">
+                    Credits will appear here when they are issued by producers
+                  </p>
                 </div>
               )}
             </div>
@@ -417,36 +529,56 @@ const AuditorDashboard = () => {
         </motion.div>
       )}
 
-      {selectedTab === 'transactions' && (
-        <motion.div variants={itemVariants} className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
+      {selectedTab === "transactions" && (
+        <motion.div
+          variants={itemVariants}
+          className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70"
+        >
           <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <Activity className="w-5 h-5" />
             Transaction Monitor ({transactions.length} transactions)
           </h2>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Transaction ID</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Type</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Volume</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">Blockchain</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    Transaction ID
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    Type
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    Volume
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    Date
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                    Blockchain
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((transaction) => (
-                  <tr key={transaction.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr
+                    key={transaction.id}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
                     <td className="py-3 px-4 text-sm text-gray-900">
                       #{transaction.id}
                     </td>
                     <td className="py-3 px-4 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        transaction.type === 'issue' ? 'bg-green-100 text-green-800' :
-                        transaction.type === 'transfer' ? 'bg-blue-100 text-blue-800' :
-                        'bg-orange-100 text-orange-800'
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          transaction.type === "issue"
+                            ? "bg-green-100 text-green-800"
+                            : transaction.type === "transfer"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-orange-100 text-orange-800"
+                        }`}
+                      >
                         {transaction.type.toUpperCase()}
                       </span>
                     </td>
@@ -458,8 +590,10 @@ const AuditorDashboard = () => {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       {transaction.tx_hash ? (
-                        <button 
-                          onClick={() => handleViewOnBlockchain(transaction.tx_hash)}
+                        <button
+                          onClick={() =>
+                            handleViewOnBlockchain(transaction.tx_hash)
+                          }
                           className="text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
                         >
                           <ExternalLink className="w-3 h-3" />
@@ -473,7 +607,7 @@ const AuditorDashboard = () => {
                 ))}
               </tbody>
             </table>
-            
+
             {transactions.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -484,13 +618,16 @@ const AuditorDashboard = () => {
         </motion.div>
       )}
 
-      {selectedTab === 'compliance' && (
-        <motion.div variants={itemVariants} className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70">
+      {selectedTab === "compliance" && (
+        <motion.div
+          variants={itemVariants}
+          className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/70"
+        >
           <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <FileCheck className="w-5 h-5" />
             Compliance & Audit Reports
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-green-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -512,7 +649,7 @@ const AuditorDashboard = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl p-6 shadow-sm border border-blue-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-blue-600" />
@@ -521,7 +658,9 @@ const AuditorDashboard = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Network:</span>
-                  <span className="font-medium text-blue-600">Sepolia Testnet</span>
+                  <span className="font-medium text-blue-600">
+                    Sepolia Testnet
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Contract Status:</span>
@@ -534,7 +673,7 @@ const AuditorDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-4">
             <button className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" />
@@ -547,6 +686,20 @@ const AuditorDashboard = () => {
           </div>
         </motion.div>
       )}
+
+      {/* Modals */}
+      <CreditAuditModal
+        isOpen={showAuditModal}
+        onClose={handleCloseAuditModal}
+        creditId={selectedCreditId}
+        onAuditComplete={handleAuditComplete}
+      />
+
+      <CreditDetailsModal
+        isOpen={showDetailsModal}
+        onClose={handleCloseDetailsModal}
+        creditId={selectedCreditId}
+      />
     </motion.div>
   );
 };
